@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: example-ingressroute
+  namespace: traefik
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`app1.spaceterran.com`)
+      kind: Rule
+      services:
+        - name: app1-service
+          port: 80
+  tls:
+    secretName: wildcard-spaceterran-com-tls  # Refers to the wildcard TLS secret

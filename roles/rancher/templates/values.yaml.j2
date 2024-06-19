@@ -1,0 +1,15 @@
+hostname: "rancher.spaceterran.com"
+
+ingress:
+  enabled: true
+  tls:
+    source: "secret"
+
+tls: "ingress"
+
+secrets:
+  tlsSecret:
+    name: wildcard-spaceterran-com-tls
+    namespace: cattle-system
+
+replicas: 3

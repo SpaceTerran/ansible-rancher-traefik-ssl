@@ -1,0 +1,70 @@
+---
+# Rancher tasks
+
+- name: Create rancher directory
+  ansible.builtin.file:
+    path: "{{ rancher_path }}"
+    mode: '0644'  # Set directory permissions
+    state: directory  # Ensure the directory exists
+
+- name: Copy values.yaml to master node
+  ansible.builtin.template:
+    src: values.yaml.j2
+    dest: "{{ rancher_path }}/values.yaml"
+    mode: '0644'  # Set file permissions
+
+- name: Copy certificate-wildcard-spaceterran-rancher.yaml to master node
+  ansible.builtin.template:
+    src: certificate-wildcard-spaceterran-rancher.yaml.j2
+    dest: "{{ rancher_path }}/certificate-wildcard-spaceterran-rancher.yaml"
+    mode: '0644'  # Set file permissions
+
+- name: Add Rancher Helm repository
+  kubernetes.core.helm_repository:
+    name: rancher-alpha
+    repo_url: https://releases.rancher.com/server-charts/alpha
+    state: present  # Ensure the repository is added
+  environment:
+    KUBECONFIG: "{{ kubectl_config }}"  # Use the kubectl config environment variable
+
+- name: Create Rancher namespace
+  kubernetes.core.k8s:
+    name: cattle-system
+    api_version: v1
+    kind: Namespace
+    state: present  # Ensure the namespace exists
+  environment:
+    KUBECONFIG: "{{ kubectl_config }}"  # Use the kubectl config environment variable
+
+- name: Create wildcard certificate for Rancher
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ rancher_path }}/certificate-wildcard-spaceterran-rancher.yaml"
+  environment:
+    KUBECONFIG: "{{ kubectl_config }}"  # Use the kubectl config environment variable
+
+- name: Update the repository cache
+  kubernetes.core.helm:
+    name: dummy
+    namespace: kube-system
+    state: absent
+    update_repo_cache: true  # Update the Helm repo cache
+  environment:
+    KUBECONFIG: "{{ kubectl_config }}"  # Use the kubectl config environment variable
+
+- name: Deploy Rancher chart inside cattle-system namespace
+  kubernetes.core.helm:
+    name: rancher
+    chart_ref: "{{ rancher_chart_ref }}"
+    chart_version: "{{ rancher_chart_version }}"
+    release_namespace: cattle-system
+    create_namespace: true
+    update_repo_cache: true
+    state: present
+    wait: true
+    values:
+      devel: true  # Use the development version of Rancher
+    values_files:
+      - "{{ rancher_path }}/values.yaml"  # Use values from the specified file
+  environment:
+    KUBECONFIG: "{{ kubectl_config }}"  # Use the kubectl config environment variable

@@ -1,0 +1,11 @@
+---
+# Tasks for managing Helm plugins
+
+- name: Check if Helm Diff plugin is already installed
+  ansible.builtin.command: /usr/local/bin/helm plugin list
+  register: helm_plugins  # Register the output of helm plugin list command
+  changed_when: false  # Do not mark the task as changed
+
+- name: Install Helm Diff plugin if not present
+  ansible.builtin.command: /usr/local/bin/helm plugin install https://github.com/databus23/helm-diff
+  when: "'diff' not in helm_plugins.stdout"  # Install the plugin only if it is not listed in the output

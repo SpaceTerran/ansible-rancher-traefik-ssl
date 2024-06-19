@@ -1,0 +1,62 @@
+---
+# Traefik tasks
+
+- name: Create traefik directory
+  ansible.builtin.file:
+    path: "{{ traefik_path }}"
+    mode: '0644'  # Set directory permissions
+    state: directory  # Ensure the directory exists
+
+- name: Copy values.yaml to master node
+  ansible.builtin.template:
+    src: values.yaml.j2
+    dest: "{{ traefik_path }}/values.yaml"
+    mode: '0644'  # Set file permissions
+
+- name: Copy certificate-wildcard-spaceterran-traefik.yaml to master node
+  ansible.builtin.template:
+    src: certificate-wildcard-spaceterran-traefik.yaml.j2
+    dest: "{{ traefik_path }}/certificate-wildcard-spaceterran-traefik.yaml"
+    mode: '0644'  # Set file permissions
+
+- name: Add Traefik Helm repository
+  kubernetes.core.helm_repository:
+    name: traefik
+    repo_url: https://helm.traefik.io/traefik
+    state: present  # Ensure the repository is added
+  environment:
+    KUBECONFIG: "{{ kubectl_config }}"  # Use the kubectl config environment variable
+
+- name: Create Traefik namespace
+  kubernetes.core.k8s:
+    name: traefik
+    api_version: v1
+    kind: Namespace
+    state: present  # Ensure the namespace exists
+  environment:
+    KUBECONFIG: "{{ kubectl_config }}"  # Use the kubectl config environment variable
+
+- name: Create wildcard certificate for Traefik
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ traefik_path }}/certificate-wildcard-spaceterran-traefik.yaml"
+  environment:
+    KUBECONFIG: "{{ kubectl_config }}"  # Use the kubectl config environment variable
+
+- name: Deploy Traefik chart inside traefik namespace
+  kubernetes.core.helm:
+    name: traefik
+    chart_ref: "{{ traefik_chart_ref }}"
+    chart_version: "{{ traefik_chart_version }}"
+    release_namespace: traefik
+    create_namespace: true
+    update_repo_cache: true
+    state: present
+    wait: true
+    values:
+      ingressClass:
+        enabled: true  # Enable ingress class
+    values_files:
+      - "{{ traefik_path }}/values.yaml"  # Use values from the specified file
+  environment:
+    KUBECONFIG: "{{ kubectl_config }}"  # Use the kubectl config environment variable

@@ -1,0 +1,24 @@
+---
+# Home base path
+home_path: /home/adminuser
+
+kubectl_config: "{{ home_path }}/.kube/config"
+
+# https://github.com/helm/helm/releases
+helm_version: v3.15.1
+
+cert_manager_chart_ref: jetstack/cert-manager
+# https://github.com/cert-manager/cert-manager/releases
+cert_manager_chart_version: v1.15.0
+cert_manager_path: "{{ home_path }}/cert-manager"
+cert_manager_email: your_email@your_domain.com
+
+traefik_chart_ref: traefik/traefik
+# https://github.com/traefik/traefik-helm-chart/releases
+traefik_chart_version: 28.3.0
+traefik_path: "{{ home_path }}/traefik"
+
+# https://github.com/rancher/rancher/releases
+rancher_chart_ref: rancher-alpha/rancher
+rancher_chart_version: 2.9.0-alpha5
+rancher_path: "{{ home_path }}/rancher"

@@ -1,0 +1,14 @@
+---
+# Main playbook to set up and install Helm, Cert-Manager, Traefik, and Rancher
+
+- name: Setup and Install Helm, Cert-Manager, Traefik, and Rancher
+  hosts: servers[0]
+  become: true
+
+  roles:
+    - common
+    - helm
+    - helm_plugins
+    - cert_manager
+    - traefik
+    - rancher
